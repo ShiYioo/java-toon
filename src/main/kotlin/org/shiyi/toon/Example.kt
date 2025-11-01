@@ -98,6 +98,37 @@ public fun main() {
     println("解码: $result")
     println()
 
+    // 示例 8: 边界情况（空数组、空对象等）
+    println("示例 8: 边界情况")
+
+    // 空数组
+    println("空数组:")
+    val emptyArrayData = mapOf("items" to emptyList<Any>())
+    val emptyArrayToon = Toon.encode(emptyArrayData)
+    println(emptyArrayToon)
+    println()
+
+    // 根级空数组
+    println("根级空数组:")
+    val rootEmptyArray = emptyList<Any>()
+    val rootEmptyArrayToon = Toon.encode(rootEmptyArray)
+    println(rootEmptyArrayToon)
+    println()
+
+    // 空对象
+    println("空对象:")
+    val emptyObjectData = mapOf("config" to emptyMap<String, Any>())
+    val emptyObjectToon = Toon.encode(emptyObjectData)
+    println(emptyObjectToon)
+    println()
+
+    // 根级空对象
+    println("根级空对象:")
+    val rootEmptyObject = emptyMap<String, Any>()
+    val rootEmptyObjectToon = Toon.encode(rootEmptyObject)
+    println(rootEmptyObjectToon)
+    println()
+
     println("=== 所有示例运行完成 ===")
 }
 
