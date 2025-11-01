@@ -131,10 +131,17 @@ private fun extractTabularHeader(array: List<*>): List<String>? {
     val first = array[0] as? Map<*, *> ?: return null
     val fields = first.keys.filterIsInstance<String>()
 
-    // 检查所有对象是否有相同的字段
+    // 检查所有对象是否有相同的字段，并且所有字段值都是原始类型
     val allSameFields = array.all { obj ->
         if (obj !is Map<*, *>) return@all false
-        obj.keys.filterIsInstance<String>().toSet() == fields.toSet()
+        val objKeys = obj.keys.filterIsInstance<String>().toSet()
+        if (objKeys != fields.toSet()) return@all false
+
+        // 检查所有字段值是否都是原始类型
+        fields.all { field ->
+            val value = obj[field]
+            value == null || value is Boolean || value is Number || value is String
+        }
     }
 
     return if (allSameFields) fields else null
@@ -200,9 +207,15 @@ private fun encodeMixedArrayAsListItems(
                 writer.pushListItem(depth + 1, encodePrimitive(value, options.delimiter.char))
             }
 
-            is List<*> if isArrayOfPrimitives(value) -> {
-                val inline = encodeInlineArrayLine(value, options.delimiter, null, options.lengthMarker)
-                writer.pushListItem(depth + 1, inline)
+            is List<*> -> {
+                if (isArrayOfPrimitives(value)) {
+                    val inline = encodeInlineArrayLine(value, options.delimiter, null, options.lengthMarker)
+                    writer.pushListItem(depth + 1, inline)
+                } else {
+                    // 嵌套的复杂数组，需要递归编码
+                    writer.pushListItem(depth + 1, "")
+                    encodeArray(null, value, writer, depth + 1, options)
+                }
             }
 
             is Map<*, *> -> {
@@ -231,12 +244,48 @@ private fun encodeObjectAsListItem(
     val firstValue = obj[firstKey]
     val encodedKey = encodeKey(firstKey)
 
-    when {
-        firstValue == null || firstValue is Boolean || firstValue is Number || firstValue is String -> {
+    when (firstValue) {
+        null, is Boolean, is Number, is String -> {
             writer.pushListItem(depth, "$encodedKey: ${encodePrimitive(firstValue, options.delimiter.char)}")
         }
-        else -> {
+        is List<*> -> {
+            // 检查是否可以使用内联或表格格式
+            if (firstValue.isEmpty()) {
+                val header = formatHeader(0, null, null, options.delimiter, options.lengthMarker)
+                writer.pushListItem(depth, "$encodedKey$header")
+            } else if (isArrayOfPrimitives(firstValue)) {
+                // 原始类型数组 - 内联格式
+                val inline = encodeInlineArrayLine(firstValue, options.delimiter, null, options.lengthMarker)
+                writer.pushListItem(depth, "$encodedKey$inline")
+            } else if (isArrayOfObjects(firstValue)) {
+                // 对象数组 - 尝试表格格式
+                val fields = extractTabularHeader(firstValue)
+                if (fields != null) {
+                    val header = formatHeader(firstValue.size, null, fields, options.delimiter, options.lengthMarker)
+                    writer.pushListItem(depth, "$encodedKey$header")
+                    // 编码表格行
+                    for (row in firstValue) {
+                        @Suppress("UNCHECKED_CAST")
+                        val rowObj = row as Map<String, Any?>
+                        val values = fields.map { rowObj[it] }
+                        val encoded = encodeAndJoinPrimitives(values, options.delimiter)
+                        writer.push(depth + 1, encoded)
+                    }
+                } else {
+                    // 不能用表格格式，使用列表格式
+                    writer.pushListItem(depth, "$encodedKey:")
+                    encodeMixedArrayAsListItems(null, firstValue, writer, depth + 1, options)
+                }
+            } else {
+                // 混合数组 - 列表格式
+                writer.pushListItem(depth, "$encodedKey:")
+                encodeMixedArrayAsListItems(null, firstValue, writer, depth + 1, options)
+            }
+        }
+        is Map<*, *> -> {
             writer.pushListItem(depth, "$encodedKey:")
+            @Suppress("UNCHECKED_CAST")
+            encodeObject(firstValue as Map<String, Any?>, writer, depth + 1, options)
         }
     }
 

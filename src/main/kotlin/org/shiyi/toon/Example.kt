@@ -54,8 +54,30 @@ public fun main() {
     println(arrayToon)
     println()
 
-    // 示例 5: 使用扩展函数
-    println("示例 5: 使用扩展函数")
+    // 示例 5: 复杂嵌套结构（对象数组）
+    println("示例 5: 编码复杂嵌套结构（对象数组）")
+    val complexData = mapOf(
+        "items" to listOf(
+            mapOf(
+                "users" to listOf(
+                    mapOf("id" to 1, "name" to "Ada"),
+                    mapOf("id" to 2, "name" to "Bob")
+                ),
+                "status" to "active"
+            )
+        )
+    )
+    try {
+        val complexToon = Toon.encode(complexData)
+        println(complexToon)
+        println()
+    }catch (e:Exception){
+        println("编码失败: ${e.message}")
+        println()
+    }
+
+    // 示例 6: 使用扩展函数
+    println("示例 6: 使用扩展函数")
     val data = mapOf("message" to "Hello TOON!")
     val toon = data.toToon()
     println(toon)
