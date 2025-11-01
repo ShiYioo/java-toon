@@ -54,8 +54,20 @@ public fun main() {
     println(arrayToon)
     println()
 
-    // 示例 5: 复杂嵌套结构（对象数组）
-    println("示例 5: 编码复杂嵌套结构（对象数组）")
+    // 示例 5: 数字对数组
+    println("示例 5: 编码数字对数组")
+    val pairsData = mapOf(
+        "pairs" to listOf(
+            listOf(1, 2),
+            listOf(3, 4)
+        )
+    )
+    val pairsToon = Toon.encode(pairsData)
+    println(pairsToon)
+    println()
+
+    // 示例 6: 复杂嵌套结构（对象数组）
+    println("示例 6: 编码复杂嵌套结构（对象数组）")
     val complexData = mapOf(
         "items" to listOf(
             mapOf(
@@ -76,8 +88,8 @@ public fun main() {
         println()
     }
 
-    // 示例 6: 使用扩展函数
-    println("示例 6: 使用扩展函数")
+    // 示例 7: 使用扩展函数
+    println("示例 7: 使用扩展函数")
     val data = mapOf("message" to "Hello TOON!")
     val toon = data.toToon()
     println(toon)
