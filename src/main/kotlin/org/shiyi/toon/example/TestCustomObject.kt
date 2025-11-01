@@ -1,4 +1,6 @@
-package org.shiyi.toon
+package org.shiyi.toon.example
+
+import org.shiyi.toon.Toon
 
 /**
  * 测试自定义对象编码

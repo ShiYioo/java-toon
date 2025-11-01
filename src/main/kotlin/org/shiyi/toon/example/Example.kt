@@ -1,5 +1,8 @@
-package org.shiyi.toon
+package org.shiyi.toon.example
 
+import org.shiyi.toon.Toon
+import org.shiyi.toon.fromToon
+import org.shiyi.toon.toToon
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Date
