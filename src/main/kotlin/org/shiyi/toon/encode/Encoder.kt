@@ -52,14 +52,16 @@ private fun encodeKeyValuePair(
 ) {
     val encodedKey = encodeKey(key)
 
-    when {
-        value == null || value is Boolean || value is Number || value is String -> {
+    when (value) {
+        null, is Boolean, is Number, is String -> {
             writer.push(depth, "$encodedKey: ${encodePrimitive(value, options.delimiter.char)}")
         }
-        value is List<*> -> {
+
+        is List<*> -> {
             encodeArray(key, value, writer, depth, options)
         }
-        value is Map<*, *> -> {
+
+        is Map<*, *> -> {
             @Suppress("UNCHECKED_CAST")
             val nestedObj = value as Map<String, Any?>
             if (nestedObj.isEmpty()) {
@@ -151,7 +153,7 @@ private fun encodeInlineArrayLine(
     if (values.isEmpty()) return header
 
     @Suppress("UNCHECKED_CAST")
-    val primitives = values as List<JsonPrimitive>
+    val primitives = values
     val joinedValue = encodeAndJoinPrimitives(primitives, delimiter)
     return "$header $joinedValue"
 }
@@ -193,15 +195,17 @@ private fun encodeMixedArrayAsListItems(
     writer.push(depth, header)
 
     for (value in values) {
-        when {
-            value == null || value is Boolean || value is Number || value is String -> {
+        when (value) {
+            null, is Boolean, is Number, is String -> {
                 writer.pushListItem(depth + 1, encodePrimitive(value, options.delimiter.char))
             }
-            value is List<*> && isArrayOfPrimitives(value) -> {
+
+            is List<*> if isArrayOfPrimitives(value) -> {
                 val inline = encodeInlineArrayLine(value, options.delimiter, null, options.lengthMarker)
                 writer.pushListItem(depth + 1, inline)
             }
-            value is Map<*, *> -> {
+
+            is Map<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 val obj = value as Map<String, Any?>
                 encodeObjectAsListItem(obj, writer, depth + 1, options)
