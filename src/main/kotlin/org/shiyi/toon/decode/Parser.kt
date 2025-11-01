@@ -42,7 +42,7 @@ public fun parseArrayHeaderLine(
     colonIndex = content.indexOf(ToonConstants.COLON, maxOf(bracketEnd, braceEnd))
     if (colonIndex == -1) return null
 
-    val key = if (bracketStart > 0) content.substring(0, bracketStart) else null
+    val key = if (bracketStart > 0) content.take(bracketStart) else null
     val afterColon = content.substring(colonIndex + 1).trim()
 
     val bracketContent = content.substring(bracketStart + 1, bracketEnd)
@@ -97,15 +97,15 @@ private fun parseBracketSegment(
     when {
         content.endsWith(ToonConstants.TAB) -> {
             delimiter = Delimiter.TAB
-            content = content.substring(0, content.length - 1)
+            content = content.dropLast(1)
         }
         content.endsWith(ToonConstants.PIPE) -> {
             delimiter = Delimiter.PIPE
-            content = content.substring(0, content.length - 1)
+            content = content.dropLast(1)
         }
         content.endsWith(ToonConstants.COMMA) -> {
             delimiter = Delimiter.COMMA
-            content = content.substring(0, content.length - 1)
+            content = content.dropLast(1)
         }
     }
 

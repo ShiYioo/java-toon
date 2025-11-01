@@ -131,7 +131,7 @@ public fun scanLines(source: String, indentSize: Int, strict: Boolean): ScanResu
             }
 
             // 检查前导空白中是否有制表符
-            if (raw.substring(0, wsEnd).contains('\t')) {
+            if (raw.take(wsEnd).contains('\t')) {
                 throw IllegalArgumentException(
                     "Line $lineNumber: Tabs are not allowed in indentation in strict mode"
                 )
