@@ -3,24 +3,56 @@ package org.shiyi.toon.encode
 import org.shiyi.toon.*
 
 /**
- * 主编码器函数 - 将值编码为 TOON 格式
+ * 主编码器函数 - 将任意值编码为 TOON 格式
+ *
+ * 此函数能够处理：
+ * - 基本类型：null, Boolean, Number, String
+ * - 集合类型：List, Set, Array, Map
+ * - 日期时间：Date, Temporal（转换为 ISO 8601 字符串）
+ * - 大数值：BigInteger, BigDecimal
+ * - 自定义对象：data class、普通 class（通过反射转换）
+ * - 其他类型：Pair, Triple, Enum
+ *
+ * 编码过程：
+ * 1. 规范化：将输入值转换为可序列化的基本类型（Map、List、基本类型）
+ * 2. 编码：将规范化后的值编码为 TOON 格式字符串
+ *
+ * @param value 要编码的值（可以是任意类型）
+ * @param options 编码选项
+ * @return TOON 格式字符串
+ *
+ * @throws IllegalArgumentException 如果值无法规范化或编码
+ *
+ * 示例：
+ * ```kotlin
+ * data class User(val name: String, val age: Int)
+ * val user = User("Alice", 30)
+ * val toon = encode(user)  // name: Alice\nage: 30
+ * ```
  */
 public fun encode(value: Any?, options: EncodeOptions): String {
+    // 第一步：规范化值
+    // 将任意 Kotlin/Java 对象转换为基本可序列化类型
+    val normalized = value.normalize()
+
+    // 第二步：编码规范化后的值
     // 处理原始类型
-    if (value == null || value is Boolean || value is Number || value is String) {
-        return encodePrimitive(value, options.delimiter.char)
+    if (normalized == null || normalized is Boolean || normalized is Number || normalized is String) {
+        return encodePrimitive(normalized, options.delimiter.char)
     }
 
     val writer = LineWriter(options.indent)
 
-    when (value) {
-        is List<*> -> encodeArray(null, value, writer, Depth.ZERO, options)
+    when (normalized) {
+        is List<*> -> encodeArray(null, normalized, writer, Depth.ZERO, options)
         is Map<*, *> -> {
             @Suppress("UNCHECKED_CAST")
-            encodeObject(value as Map<String, Any?>, writer, Depth.ZERO, options)
+            encodeObject(normalized as Map<String, Any?>, writer, Depth.ZERO, options)
         }
 
-        else -> throw IllegalArgumentException("Unsupported value type: ${value::class}")
+        else -> throw IllegalArgumentException(
+            "Unsupported value type after normalization: ${normalized::class.simpleName}"
+        )
     }
 
     return writer.toString()
@@ -76,6 +108,8 @@ private fun encodeKeyValuePair(
 
 /**
  * 编码数组
+ *
+ * 注意：数组元素会先被规范化，确保自定义对象（如 data class）被转换为 Map
  */
 private fun encodeArray(
     key: String?,
@@ -90,24 +124,28 @@ private fun encodeArray(
         return
     }
 
+    // 第一步：规范化数组元素
+    // 这确保 data class 等对象被转换为 Map，从而能被识别为对象数组
+    val normalizedArray = array.map { it.normalize() }
+
     // 检测是否为原始类型数组
-    if (isArrayOfPrimitives(array)) {
-        val formatted = encodeInlineArrayLine(array, options.delimiter, key, options.lengthMarker)
+    if (isArrayOfPrimitives(normalizedArray)) {
+        val formatted = encodeInlineArrayLine(normalizedArray, options.delimiter, key, options.lengthMarker)
         writer.push(depth, formatted)
         return
     }
 
     // 检测是否为对象数组（表格格式）
-    if (isArrayOfObjects(array)) {
-        val fields = extractTabularHeader(array)
+    if (isArrayOfObjects(normalizedArray)) {
+        val fields = extractTabularHeader(normalizedArray)
         if (fields != null) {
-            encodeArrayOfObjectsAsTabular(key, array, fields, writer, depth, options)
+            encodeArrayOfObjectsAsTabular(key, normalizedArray, fields, writer, depth, options)
             return
         }
     }
 
     // 默认：列表格式
-    encodeMixedArrayAsListItems(key, array, writer, depth, options)
+    encodeMixedArrayAsListItems(key, normalizedArray, writer, depth, options)
 }
 
 /**

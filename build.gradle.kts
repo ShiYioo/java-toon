@@ -16,6 +16,8 @@ dependencies {
     // Kotlin standard library
     implementation(kotlin("stdlib"))
 
+    implementation(kotlin("reflect"))
+
     // Testing dependencies
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
