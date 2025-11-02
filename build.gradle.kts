@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.shiyi"
-version = "1.0-SNAPSHOT"
+version = "0.0.1"
 description = "A Kotlin and Java library for toon implementation"
 
 repositories {
