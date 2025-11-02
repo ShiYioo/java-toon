@@ -15,8 +15,12 @@ repositories {
 dependencies {
     // Kotlin standard library
     implementation(kotlin("stdlib"))
-
     implementation(kotlin("reflect"))
+
+    // Jackson for JSON/Object conversion (Kotlin support)
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.1")
 
     // Testing dependencies
     testImplementation(kotlin("test"))

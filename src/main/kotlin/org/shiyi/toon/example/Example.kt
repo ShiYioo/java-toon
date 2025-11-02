@@ -1,8 +1,6 @@
 package org.shiyi.toon.example
 
-import org.shiyi.toon.Toon
-import org.shiyi.toon.fromToon
-import org.shiyi.toon.toToon
+import org.shiyi.toon.*
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.Date
@@ -33,7 +31,6 @@ private fun formatDecodeResult(value: Any?, indent: Int = 0): String {
         else -> value.toString()
     }
 }
-
 /**
  * 示例 data class：用户信息
  */
@@ -239,11 +236,11 @@ public fun main() {
     // 示例 11: 编码嵌套 data class
     println("示例 11: 编码嵌套 data class")
     val config = Config(theme = "dark", notifications = true, fontSize = 14)
-    val profile = mapOf(
+    val profile1 = mapOf(
         "user" to user,
         "config" to config
     )
-    val nestedDataClassToon = Toon.encode(profile)
+    val nestedDataClassToon = Toon.encode(profile1)
     println(nestedDataClassToon)
     println()
 
@@ -609,6 +606,99 @@ public fun main() {
     val orderDataDecoded = Toon.decode(orderDataToonInput)
     println("输入:\n$orderDataToonInput")
     println("解码结果:\n${formatDecodeResult(orderDataDecoded)}")
+    println()
+
+    println("\n========== 类型化反序列化 API 示例 ==========\n")
+
+    // 示例 38: 使用 decodeAs 泛型方法解码为 User 类型
+    println("示例 38: 使用 decodeAs<T> 泛型方法解码为 User 类型")
+    val userToonStr = """
+        name: Alice
+        age: 30
+        email: alice@example.com
+    """.trimIndent()
+    val userDecoded = Toon.decodeAs<User>(userToonStr)
+    println("输入:\n$userToonStr")
+    println("解码为 User 对象: $userDecoded")
+    println("访问属性 - name: ${userDecoded.name}, age: ${userDecoded.age}, email: ${userDecoded.email}")
+    println()
+
+    // 示例 39: 使用扩展函数 fromToonAs<T>
+    println("示例 39: 使用扩展函数 fromToonAs<T>")
+    val configToonStr = """
+        theme: dark
+        notifications: true
+        fontSize: 14
+    """.trimIndent()
+    val configDecoded = configToonStr.fromToonAs<Config>()
+    println("输入:\n$configToonStr")
+    println("解码为 Config 对象: $configDecoded")
+    println("访问属性 - theme: ${configDecoded.theme}, notifications: ${configDecoded.notifications}")
+    println()
+
+    // 示例 40: 使用 KClass 参数解码（适用于运行时类型）
+    println("示例 40: 使用 KClass 参数解码")
+    val userFromKClass = Toon.decodeAs(userToonStr, User::class)
+    println("使用 User::class 解码: $userFromKClass")
+    println()
+
+    // 示例 41: 解码包含 null 字段的对象
+    println("示例 41: 解码包含 null 字段的对象")
+    val userWithoutEmailToon = """
+        name: Bob
+        age: 25
+    """.trimIndent()
+    val userWithoutEmailDecoded = userWithoutEmailToon.fromToonAs<User>()
+    println("输入:\n$userWithoutEmailToon")
+    println("解码结果: $userWithoutEmailDecoded")
+    println("email 字段为 null: ${userWithoutEmailDecoded.email == null}")
+    println()
+
+    // 示例 42: 解码包含枚举的对象
+    println("示例 42: 解码包含枚举的对象")
+    data class UserStatus(val username: String, val status: Status, val level: Int)
+
+    val userStatusToon = """
+        username: charlie
+        status: ACTIVE
+        level: 5
+    """.trimIndent()
+    val userStatusDecoded = userStatusToon.fromToonAs<UserStatus>()
+    println("输入:\n$userStatusToon")
+    println("解码结果: $userStatusDecoded")
+    println("枚举值: ${userStatusDecoded.status}")
+    println()
+
+    // 示例 43: 编码后解码到具体类型（往返测试）
+    println("示例 43: 编码后解码到具体类型（往返测试）")
+    val originalUser = User("David", 40, "david@example.com")
+    val encoded = originalUser.toToon()
+    val roundTripUser = encoded.fromToonAs<User>()
+    println("原始对象: $originalUser")
+    println("编码为 TOON:\n$encoded")
+    println("解码回对象: $roundTripUser")
+    println("对象相等: ${originalUser == roundTripUser}")
+    println()
+
+    // 示例 44: 类型转换错误处理
+    println("示例 44: 类型转换错误处理")
+    val invalidTypeToon = """
+        name: Alice
+        age: not_a_number
+    """.trimIndent()
+    try {
+        val invalidUser = invalidTypeToon.fromToonAs<User>()
+        println("不应该到达这里: $invalidUser")
+    } catch (e: Exception) {
+        println("捕获到预期的错误: ${e.message}")
+    }
+    println()
+
+    // 示例 45: 使用 JsonValue.toType() 扩展函数
+    println("示例 45: 使用 JsonValue.toType() 扩展函数")
+    val jsonValue = Toon.decode(userToonStr)
+    val userFromJsonValue = jsonValue.toType<User>()
+    println("从 JsonValue 转换: $userFromJsonValue")
     println()
 
     println("=== 所有示例运行完成 ===")

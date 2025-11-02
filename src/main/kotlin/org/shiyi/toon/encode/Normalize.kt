@@ -1,17 +1,15 @@
 package org.shiyi.toon.encode
 
+import org.shiyi.toon.ToonMapper
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.temporal.Temporal
 import java.util.Date
-import kotlin.reflect.KProperty1
-import kotlin.reflect.KVisibility
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 
 /**
  * 值规范化器 - 将任意 Kotlin/Java 对象转换为可序列化的基本类型
  *
+ * 使用 Jackson 处理复杂对象转换，提供更可靠和高效的实现。
  *
  * @author ShiYi
  */
@@ -28,13 +26,12 @@ internal object ValueNormalizer {
      * - 映射类型：Map -> Map<String, Any?>
      * - 元组类型：Pair, Triple -> List
      * - 枚举类型：Enum -> String (name)
-     * - 自定义对象：通过反射转换为 Map<String, Any?>
+     * - 自定义对象：通过 Jackson 转换为 Map<String, Any?>
      *
      * @param value 要规范化的值
      * @return 规范化后的值（null、Boolean、Number、String、List 或 Map）
      */
-    fun normalize(value: Any?): Any? = when (// null
-        value) {
+    fun normalize(value: Any?): Any? = when (value) {
         null -> null
 
         // 基本类型
@@ -83,7 +80,7 @@ internal object ValueNormalizer {
             normalize(value.third)
         )
 
-        // 自定义对象（通过反射处理）
+        // 自定义对象（使用 Jackson 转换）
         else -> normalizeObject(value)
     }
 
@@ -167,62 +164,30 @@ internal object ValueNormalizer {
     /**
      * 规范化普通对象
      *
-     * 使用 Kotlin 反射提取对象的属性，转换为 Map
+     * 使用 Jackson 将对象转换为 Map，然后递归规范化值。
      *
-     * 策略：
-     * 1. 尝试使用 Kotlin 反射获取 memberProperties
-     * 2. 过滤出公开的、可访问的属性
-     * 3. 递归规范化属性值
-     * 4. 如果反射失败，返回对象的 toString()
+     * 优点：
+     * - 支持所有 Jackson 注解 (@JsonProperty, @JsonIgnore 等)
+     * - 处理复杂类型（日期、枚举、嵌套对象等）
+     * - 性能更好，代码更简洁
+     * - 更可靠，避免反射相关的问题
      *
      * @param obj 要规范化的对象
-     * @return 规范化后的 Map 或字符串
+     * @return 规范化后的 Map
      */
     private fun normalizeObject(obj: Any): Any {
         return try {
-            // 尝试使用 Kotlin 反射
-            val kClass = obj::class
+            // 使用 Jackson 将对象转换为 Map
+            val jsonValue = ToonMapper.toJsonValue(obj)
 
-            // 获取所有成员属性
-            val properties = kClass.memberProperties
-
-            if (properties.isEmpty()) {
-                // 没有属性，返回 toString
-                return obj.toString()
-            }
-
-            // 将对象转换为 Map
-            val resultMap = mutableMapOf<String, Any?>()
-
-            for (property in properties) {
-                try {
-                    // 只处理公开的属性
-                    if (property.visibility != KVisibility.PUBLIC) {
-                        continue
-                    }
-
-                    // 确保属性可访问
-                    @Suppress("UNCHECKED_CAST")
-                    val prop = property as KProperty1<Any, Any?>
-                    prop.isAccessible = true
-
-                    // 获取属性值
-                    val value = prop.get(obj)
-
-                    // 递归规范化
-                    resultMap[property.name] = normalize(value)
-                } catch (e: Exception) {
-                    // 跳过无法访问的属性
-                    continue
-                }
-            }
-
-            // 如果没有成功提取任何属性，返回 toString
-            resultMap.ifEmpty {
-                obj.toString()
+            // 递归规范化 Map 中的值
+            when (jsonValue) {
+                is Map<*, *> -> normalizeMap(jsonValue)
+                is List<*> -> normalizeCollection(jsonValue)
+                else -> jsonValue ?: obj.toString()
             }
         } catch (e: Exception) {
-            // 反射失败，返回字符串表示
+            // Jackson 转换失败，返回字符串表示
             obj.toString()
         }
     }
