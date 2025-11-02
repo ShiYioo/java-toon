@@ -14,9 +14,35 @@ import org.shiyi.toon.utils.*
 public fun encodePrimitive(value: JsonPrimitive, delimiter: Char = Delimiter.DEFAULT.char): String = when (value) {
     null -> ToonConstants.NULL_LITERAL
     is Boolean -> value.toString()
-    is Number -> value.toString()
+    is Number -> encodeNumber(value)
     is String -> encodeStringLiteral(value, delimiter)
     else -> throw IllegalArgumentException("Unsupported primitive type: ${value::class}")
+}
+
+/**
+ * Encodes a number, formatting it appropriately.
+ *
+ */
+private fun encodeNumber(value: Number): String {
+    return when (value) {
+        is Double -> {
+            // 检查是否为整数值
+            if (value.isFinite() && value == value.toLong().toDouble()) {
+                value.toLong().toString()
+            } else {
+                value.toString()
+            }
+        }
+        is Float -> {
+            // 检查是否为整数值
+            if (value.isFinite() && value == value.toLong().toFloat()) {
+                value.toLong().toString()
+            } else {
+                value.toString()
+            }
+        }
+        else -> value.toString()
+    }
 }
 
 /**

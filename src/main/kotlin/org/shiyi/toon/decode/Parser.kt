@@ -219,11 +219,35 @@ public fun parsePrimitiveToken(value: String): JsonPrimitive {
 
     // 尝试解析为数字
     if (trimmed.isNumericLiteral()) {
-        return trimmed.toDoubleOrNull() ?: trimmed.toLongOrNull() ?: trimmed
+        return parseNumericValue(trimmed)
     }
 
     // 不带引号的字符串
     return trimmed
+}
+
+/**
+ * 解析数字值
+ *
+ */
+private fun parseNumericValue(value: String): JsonPrimitive {
+    // 检查是否包含小数点或科学计数法标记
+    val hasDecimalPoint = value.contains('.')
+    val hasExponent = value.contains('e', ignoreCase = true)
+
+    return when {
+        // 包含小数点或指数，解析为 Double
+        hasDecimalPoint || hasExponent -> {
+            value.toDoubleOrNull() ?: value
+        }
+        // 整数格式，优先解析为 Int，超出范围则用 Long
+        else -> {
+            value.toIntOrNull()
+                ?: value.toLongOrNull()
+                ?: value.toDoubleOrNull()
+                ?: value
+        }
+    }
 }
 
 /**
