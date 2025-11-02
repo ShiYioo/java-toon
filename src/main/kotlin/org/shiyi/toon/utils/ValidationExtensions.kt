@@ -30,9 +30,13 @@ public fun String.isNumericLiteral(): Boolean {
 
 /**
  * Checks if a string can be safely represented without quotes.
+ *
  */
 public fun String.isSafeUnquoted(delimiter: Char): Boolean {
     if (isEmpty()) return false
+
+    // Check for leading/trailing whitespace
+    if (this != trim()) return false
 
     // Check for reserved literals
     if (isBooleanOrNullLiteral() || isNumericLiteral()) return false
@@ -45,11 +49,13 @@ public fun String.isSafeUnquoted(delimiter: Char): Boolean {
         char == ToonConstants.CARRIAGE_RETURN ||
         char == ToonConstants.TAB ||
         char == ToonConstants.BACKSLASH ||
+        char == ToonConstants.OPEN_BRACKET ||
+        char == ToonConstants.CLOSE_BRACKET ||
+        char == ToonConstants.OPEN_BRACE ||
+        char == ToonConstants.CLOSE_BRACE ||
         char == delimiter
     } && !startsWith(ToonConstants.LIST_ITEM_PREFIX) &&
-      !startsWith(ToonConstants.HASH) &&
-      !startsWith(ToonConstants.OPEN_BRACKET) &&
-      trim() == this
+      !startsWith(ToonConstants.HASH)
 }
 
 /**

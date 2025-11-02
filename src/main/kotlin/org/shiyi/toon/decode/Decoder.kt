@@ -23,11 +23,17 @@ public fun decode(input: String, options: DecodeOptions): JsonValue {
 private fun decodeValue(cursor: LineCursor, options: DecodeOptions): JsonValue {
     val first = cursor.peek() ?: throw IllegalArgumentException("No content to decode")
 
-    // 检查根级数组
+    // 检查根级数组（只有当没有 key 时才作为根数组返回）
     if (isArrayHeaderAfterHyphen(first.content)) {
         val result = parseArrayHeaderLine(first.content, Delimiter.DEFAULT)
         if (result != null) {
             val (headerInfo, inlineValues) = result
+            // 如果有 key，说明这是对象的属性，应该包装在对象中
+            if (headerInfo.key != null) {
+                // 将其作为对象的一个属性处理
+                return decodeObject(cursor, Depth.ZERO, options)
+            }
+            // 没有 key，作为根数组返回
             cursor.advance()
             return decodeArrayFromHeader(headerInfo, inlineValues, cursor, Depth.ZERO, options)
         }
