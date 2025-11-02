@@ -8,6 +8,33 @@ import java.math.BigInteger
 import java.util.Date
 
 /**
+ * 将解码结果格式化为更易读的 JSON 格式
+ */
+private fun formatDecodeResult(value: Any?, indent: Int = 0): String {
+    val indentStr = "  ".repeat(indent)
+    return when (value) {
+        null -> "null"
+        is String -> "\"$value\""
+        is Boolean, is Number -> value.toString()
+        is Map<*, *> -> {
+            if (value.isEmpty()) return "{}"
+            val entries = value.entries.joinToString(",\n") { (k, v) ->
+                "$indentStr  \"$k\": ${formatDecodeResult(v, indent + 1)}"
+            }
+            "{\n$entries\n$indentStr}"
+        }
+        is List<*> -> {
+            if (value.isEmpty()) return "[]"
+            val items = value.joinToString(",\n") { item ->
+                "$indentStr  ${formatDecodeResult(item, indent + 1)}"
+            }
+            "[\n$items\n$indentStr]"
+        }
+        else -> value.toString()
+    }
+}
+
+/**
  * 示例 data class：用户信息
  */
 public data class User(
@@ -336,6 +363,252 @@ public fun main() {
     )
     val mixedArrayToon = Toon.encode(mixedArray)
     println(mixedArrayToon)
+    println()
+
+    println("\n========== 复杂 TOON 解码示例 ==========\n")
+
+    // 示例 21: 解码嵌套对象
+    println("示例 21: 解码嵌套对象")
+    val nestedToonInput = """
+        a:
+          b:
+            c: deep
+    """.trimIndent()
+    val nestedDecoded = Toon.decode(nestedToonInput)
+    println("输入:\n$nestedToonInput")
+    println("解码结果:\n${formatDecodeResult(nestedDecoded)}")
+    println()
+
+    // 示例 22: 解码原始类型数组
+    println("示例 22: 解码原始类型数组")
+    val primitiveArrayToonInput = """
+        tags[3]: reading,gaming,coding
+        nums[3]: 1,2,3
+        data[4]: x,y,true,10
+    """.trimIndent()
+    val primitiveArrayDecoded = Toon.decode(primitiveArrayToonInput)
+    println("输入:\n$primitiveArrayToonInput")
+    println("解码结果:\n${formatDecodeResult(primitiveArrayDecoded)}")
+    println()
+
+    // 示例 23: 解码表格格式的对象数组
+    println("示例 23: 解码表格格式的对象数组")
+    val tabularToonInput = """
+        items[2]{sku,qty,price}:
+          A1,2,9.99
+          B2,1,14.5
+    """.trimIndent()
+    val tabularDecoded = Toon.decode(tabularToonInput)
+    println("输入:\n$tabularToonInput")
+    println("解码结果:\n${formatDecodeResult(tabularDecoded)}")
+    println()
+
+    // 示例 24: 解码带引号的字符串数组
+    println("示例 24: 解码带引号的字符串数组")
+    val quotedArrayToonInput = """
+        items[3]: a,"b,c","d:e"
+        values[4]: x,"true","42","-3.14"
+    """.trimIndent()
+    val quotedArrayDecoded = Toon.decode(quotedArrayToonInput)
+    println("输入:\n$quotedArrayToonInput")
+    println("解码结果:\n${formatDecodeResult(quotedArrayDecoded)}")
+    println()
+
+    // 示例 25: 解码列表格式的对象数组
+    println("示例 25: 解码列表格式的对象数组")
+    val listItemsToonInput = """
+        items[2]:
+          - id: 1
+            name: First
+          - id: 2
+            name: Second
+            extra: true
+    """.trimIndent()
+    val listItemsDecoded = Toon.decode(listItemsToonInput)
+    println("输入:\n$listItemsToonInput")
+    println("解码结果:\n${formatDecodeResult(listItemsDecoded)}")
+    println()
+
+    // 示例 26: 解码带有嵌套值的列表项
+    println("示例 26: 解码带有嵌套值的列表项")
+    val nestedListToonInput = """
+        items[1]:
+          - id: 1
+            nested:
+              x: 1
+              y: 2
+    """.trimIndent()
+    val nestedListDecoded = Toon.decode(nestedListToonInput)
+    println("输入:\n$nestedListToonInput")
+    println("解码结果:\n${formatDecodeResult(nestedListDecoded)}")
+    println()
+
+    // 示例 27: 解码嵌套的表格数组
+    println("示例 27: 解码嵌套的表格数组")
+    val nestedTabularToonInput = """
+        items[1]:
+          - users[2]{id,name}:
+            1,Ada
+            2,Bob
+            status: active
+    """.trimIndent()
+    val nestedTabularDecoded = Toon.decode(nestedTabularToonInput)
+    println("输入:\n$nestedTabularToonInput")
+    println("解码结果:\n${formatDecodeResult(nestedTabularDecoded)}")
+    println()
+
+    // 示例 28: 解码混合数组（原始类型、对象和字符串）
+    println("示例 28: 解码混合数组")
+    val mixedListToonInput = """
+        items[3]:
+          - 1
+          - a: 1
+          - text
+    """.trimIndent()
+    val mixedListDecoded = Toon.decode(mixedListToonInput)
+    println("输入:\n$mixedListToonInput")
+    println("解码结果:\n${formatDecodeResult(mixedListDecoded)}")
+    println()
+
+    // 示例 29: 解码复杂混合结构
+    println("示例 29: 解码复杂混合结构")
+    val complexMixedToonInput = """
+        user:
+          id: 123
+          name: Ada
+          tags[2]: reading,gaming
+          active: true
+          prefs[0]:
+    """.trimIndent()
+    val complexMixedDecoded = Toon.decode(complexMixedToonInput)
+    println("输入:\n$complexMixedToonInput")
+    println("解码结果:\n${formatDecodeResult(complexMixedDecoded)}")
+    println()
+
+    // 示例 30: 解码嵌套原始类型数组
+    println("示例 30: 解码嵌套原始类型数组")
+    val nestedPrimitivesToonInput = """
+        matrix[2]:
+          - [3]: 1,2,3
+          - [3]: 4,5,6
+    """.trimIndent()
+    val nestedPrimitivesDecoded = Toon.decode(nestedPrimitivesToonInput)
+    println("输入:\n$nestedPrimitivesToonInput")
+    println("解码结果:\n${formatDecodeResult(nestedPrimitivesDecoded)}")
+    println()
+
+    // 示例 31: 解码空数组和空对象
+    println("示例 31: 解码空数组和空对象")
+    val emptyStructuresToonInput = """
+        items[0]:
+        config:
+    """.trimIndent()
+    val emptyStructuresDecoded = Toon.decode(emptyStructuresToonInput)
+    println("输入:\n$emptyStructuresToonInput")
+    println("解码结果:\n${formatDecodeResult(emptyStructuresDecoded)}")
+    println()
+
+    // 示例 32: 解码包含 null 和布尔值的表格
+    println("示例 32: 解码包含 null 和布尔值的表格")
+    val nullBoolTableToonInput = """
+        items[3]{id,value,active}:
+          1,null,true
+          2,"test",false
+          3,null,null
+    """.trimIndent()
+    val nullBoolTableDecoded = Toon.decode(nullBoolTableToonInput)
+    println("输入:\n$nullBoolTableToonInput")
+    println("解码结果:\n${formatDecodeResult(nullBoolTableDecoded)}")
+    println()
+
+    // 示例 33: 解码 Unicode 和 Emoji
+    println("示例 33: 解码 Unicode 和 Emoji")
+    val unicodeToonInput = """
+        name: 你好世界
+        emoji: 🚀
+        greeting: hello 👋 world
+        café: café
+    """.trimIndent()
+    val unicodeDecoded = Toon.decode(unicodeToonInput)
+    println("输入:\n$unicodeToonInput")
+    println("解码结果:\n${formatDecodeResult(unicodeDecoded)}")
+    println()
+
+    // 示例 34: 解码转义字符
+    println("示例 34: 解码转义字符")
+    val escapedToonInput = """
+        path: "C:\\Users\\path"
+        multiline: "line1\nline2"
+        quoted: "say \"hello\""
+    """.trimIndent()
+    val escapedDecoded = Toon.decode(escapedToonInput)
+    println("输入:\n$escapedToonInput")
+    println("解码结果:\n${formatDecodeResult(escapedDecoded)}")
+    println()
+
+    // 示例 35: 编码后再解码（往返测试）
+    println("示例 35: 编码后再解码（往返测试）")
+    val originalData = mapOf(
+        "users" to listOf(
+            mapOf("id" to 1, "name" to "Alice", "active" to true),
+            mapOf("id" to 2, "name" to "Bob", "active" to false)
+        ),
+        "config" to mapOf(
+            "theme" to "dark",
+            "fontSize" to 14
+        ),
+        "tags" to listOf("kotlin", "toon", "serialization")
+    )
+    val encodedToon = Toon.encode(originalData)
+    println("原始数据:\n${formatDecodeResult(originalData)}")
+    println("\n编码为 TOON:\n$encodedToon")
+    val roundTripDecoded = Toon.decode(encodedToon)
+    println("\n解码回数据:\n${formatDecodeResult(roundTripDecoded)}")
+    println("\n往返匹配: ${originalData == roundTripDecoded}")
+    println()
+
+    // 示例 36: 解码实际业务场景（用户配置）
+    println("示例 36: 解码实际业务场景（用户配置）")
+    val userProfileToonInput = """
+        profile:
+          userId: u123
+          username: alice_dev
+          email: alice@example.com
+          preferences:
+            language: zh-CN
+            theme: dark
+            notifications: true
+          roles[3]: admin,developer,reviewer
+          metadata:
+            lastLogin: 2024-11-01T10:30:00Z
+            loginCount: 42
+    """.trimIndent()
+    val userProfileDecoded = Toon.decode(userProfileToonInput)
+    println("输入:\n$userProfileToonInput")
+    println("解码结果:\n${formatDecodeResult(userProfileDecoded)}")
+    println()
+
+    // 示例 37: 解码实际业务场景（订单数据）
+    println("示例 37: 解码实际业务场景（订单数据）")
+    val orderDataToonInput = """
+        order:
+          orderId: ORD-2024-001
+          customer:
+            name: John Doe
+            email: john@example.com
+          items[2]{productId,name,quantity,price}:
+            P001,Laptop,1,999.99
+            P002,Mouse,2,29.99
+          shipping:
+            address: 123 Main St
+            city: Beijing
+            country: China
+          total: 1059.97
+          status: pending
+    """.trimIndent()
+    val orderDataDecoded = Toon.decode(orderDataToonInput)
+    println("输入:\n$orderDataToonInput")
+    println("解码结果:\n${formatDecodeResult(orderDataDecoded)}")
     println()
 
     println("=== 所有示例运行完成 ===")
