@@ -34,7 +34,7 @@ private fun formatDecodeResult(value: Any?, indent: Int = 0): String {
 /**
  * 示例 data class：用户信息
  */
-public data class User(
+private data class User(
     val name: String,
     val age: Int,
     val email: String? = null
@@ -43,7 +43,7 @@ public data class User(
 /**
  * 示例 data class：配置信息
  */
-public data class Config(
+private data class Config(
     val theme: String,
     val notifications: Boolean,
     val fontSize: Int
@@ -52,7 +52,7 @@ public data class Config(
 /**
  * 示例 data class：产品信息
  */
-public data class Product(
+private data class Product(
     val id: Int,
     val name: String,
     val price: Double,
@@ -62,14 +62,14 @@ public data class Product(
 /**
  * 示例 enum：状态
  */
-public enum class Status {
+private enum class Status {
     ACTIVE, INACTIVE, PENDING
 }
 
 /**
  * 示例复杂 data class：订单信息
  */
-public data class Order(
+private data class Order(
     val orderId: String,
     val user: User,
     val products: List<Product>,
