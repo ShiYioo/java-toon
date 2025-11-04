@@ -23,7 +23,7 @@
 
 ```kotlin
 dependencies {
-    implementation("org.shiyi:java-toon:0.0.1")
+    implementation("io.github.shiyioo:java-toon:0.0.1")
 }
 ```
 
@@ -31,7 +31,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'org.shiyi:java-toon:0.0.1'
+    implementation 'io.github.shiyioo:java-toon:0.0.1'
 }
 ```
 
@@ -39,7 +39,7 @@ dependencies {
 
 ```xml
 <dependency>
-    <groupId>org.shiyi</groupId>
+    <groupId>io.github.shiyioo</groupId>
     <artifactId>java-toon</artifactId>
     <version>0.0.1</version>
 </dependency>
